@@ -1,7 +1,6 @@
 const mineflayer = require('mineflayer');
-const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
-const { token, channelId, messageId } = require('./config');
-const token = process.env.DISCORD_TOKEN;
+const axios = require('axios');
+const { webhookURL, messageId } = require('./config');
 
 const botOptions = {
   host: 'the8ghzlethalhvh.aternos.me',
@@ -11,8 +10,6 @@ const botOptions = {
 
 let bot;
 const updateInterval = 4000; // Update every 4 seconds
-let discordClient;
-let discordMessage;
 
 const createBot = () => {
   bot = mineflayer.createBot(botOptions);
@@ -27,9 +24,9 @@ const createBot = () => {
   bot.on('message', async message => {
     const messageContent = message.toString().trim();
     if (messageContent) {
-      await sendMessageToDiscord(messageContent);
+      await sendMessageToWebhook(messageContent);
     } else {
-      console.log('Received an empty message, not sending to Discord.');
+      console.log('Received an empty message, not sending to webhook.');
     }
   });
 
@@ -50,32 +47,30 @@ const createBot = () => {
   });
 };
 
-const sendMessageToDiscord = async () => {
-  if (!discordClient || !discordClient.isReady()) return;
-
+const sendMessageToWebhook = async () => {
   try {
-    const channel = await discordClient.channels.fetch(channelId);
-    if (!discordMessage) {
-      discordMessage = await channel.send({
-        content: 'PlayerList',
-        embeds: [await createPlayerListEmbed()]
-      });
+    const embed = await createPlayerListEmbed();
+
+    const payload = {
+      content: 'PlayerList',
+      embeds: [embed]
+    };
+
+    if (!messageId) {
+      // Send a new message if messageId is not provided
+      await axios.post(webhookURL, payload);
     } else {
-      await discordMessage.edit({
-        content: 'PlayerList',
-        embeds: [await createPlayerListEmbed()]
-      });
+      // Edit the existing message if messageId is provided
+      await axios.patch(`${webhookURL}/messages/${messageId}`, payload);
     }
   } catch (error) {
-    console.error('Error sending message to Discord:', error.message);
+    console.error('Error sending message to webhook:', error.message);
   }
 };
 
 const runPeriodicTasks = () => {
   setInterval(async () => {
-    if (discordClient && discordClient.isReady()) {
-      await sendMessageToDiscord();
-    }
+    await sendMessageToWebhook();
   }, updateInterval);
 };
 
@@ -88,39 +83,25 @@ const createPlayerListEmbed = async () => {
   try {
     const players = await getOnlinePlayers();
     const playerList = players.map(player => `- ${player}`).join('\n');
-    return new EmbedBuilder()
-      .setTitle('Online Players')
-      .setDescription(playerList || 'No players online')
-      .setColor('#00FF00'); // Green color
+    return {
+      title: 'Online Players',
+      description: playerList || 'No players online',
+      color: 3066993 // Color in hex, #00FF00 is green
+    };
   } catch (error) {
     console.error('Error creating player list embed:', error.message);
-    return new EmbedBuilder()
-      .setTitle('Online Players')
-      .setDescription('Error retrieving player list')
-      .setColor('#FF0000'); // Red color for error
+    return {
+      title: 'Online Players',
+      description: 'Error retrieving player list',
+      color: 15158332 // Color in hex, #FF0000 is red
+    };
   }
 };
 
 const getOnlinePlayers = () => {
+  // Include the bot's own username in the player list
   return Object.values(bot.players)
     .map(player => player.username); // Include all players
 };
 
-const initializeDiscordBot = () => {
-  discordClient = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
-  });
-
-  discordClient.once('ready', async () => {
-    console.log(`Logged in as ${discordClient.user.tag}`);
-    await sendMessageToDiscord(); // Send initial message
-  });
-
-  discordClient.on('error', console.error);
-
-  discordClient.login(token);
-};
-
-// Initialize and start the bots
-initializeDiscordBot();
 createBot();
