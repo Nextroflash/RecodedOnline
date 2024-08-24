@@ -1,6 +1,7 @@
 const mineflayer = require('mineflayer');
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const { token, channelId, messageId } = require('./config');
+const token = process.env.DISCORD_TOKEN;
 
 const botOptions = {
   host: 'the8ghzlethalhvh.aternos.me',
