@@ -57,10 +57,10 @@ const sendMessageToWebhook = async () => {
     };
 
     if (!messageId) {
-      // Send a new message if messageId is not provided
+      // Send a new message
       await axios.post(webhookURL, payload);
     } else {
-      // Edit the existing message if messageId is provided
+      // Edit the existing message
       await axios.patch(`${webhookURL}/messages/${messageId}`, payload);
     }
   } catch (error) {
