@@ -9,7 +9,7 @@ const botOptions = {
 };
 
 let bot;
-const updateInterval = 4000; // Update every 10 seconds
+const updateInterval = 4000; // Update every 4 seconds
 let discordClient;
 let discordMessage;
 
@@ -90,7 +90,7 @@ const createPlayerListEmbed = async () => {
     return new EmbedBuilder()
       .setTitle('Online Players')
       .setDescription(playerList || 'No players online')
-      .setColor('#00FF00'); // Use a valid hex color code
+      .setColor('#00FF00'); // Green color
   } catch (error) {
     console.error('Error creating player list embed:', error.message);
     return new EmbedBuilder()
@@ -101,7 +101,6 @@ const createPlayerListEmbed = async () => {
 };
 
 const getOnlinePlayers = () => {
-  // Include the bot's own username in the player list
   return Object.values(bot.players)
     .map(player => player.username); // Include all players
 };
