@@ -2,6 +2,9 @@ const mineflayer = require('mineflayer');
 const axios = require('axios');
 const { webhookURL, messageId } = require('./config');
 
+const app = express();
+const port = process.env.PORT || 3000;
+
 const botOptions = {
   host: 'the8ghzlethalhvh.aternos.me',
   port: 44725,
@@ -103,5 +106,14 @@ const getOnlinePlayers = () => {
   return Object.values(bot.players)
     .map(player => player.username); // Include all players
 };
+
+// Set up and start the Express web server
+app.get('/', (req, res) => {
+  res.send('Minecraft Discord Bot is running');
+});
+
+app.listen(port, () => {
+  console.log(`Web server running on port ${port}`);
+});
 
 createBot();
